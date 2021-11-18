@@ -1,0 +1,20 @@
+---
+
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+  - name: (check) Test if services are started and enabled
+    systemd:
+      enabled: true
+      name: "prometheus.service"
+      state: started
+
+  - name: (check) Test if services ports are open and reachable
+    wait_for:
+      port: "9090"
+
+  - name: (check) Test if prometheus web interface is OK
+    uri:
+      status_code: 200
+      url: "http://localhost:9090"

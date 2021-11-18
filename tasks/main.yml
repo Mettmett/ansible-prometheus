@@ -1,0 +1,81 @@
+---
+# based on https://github.com/cloudalchemy/ansible-prometheus
+
+- name: (sys) download prometheus archive with check (sha256)
+  get_url:
+    checksum: sha256:{{ prometheus_sha256 }}
+    dest: /tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+    url: https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+  register: prometheus_source
+
+- name: (build) create a temp folder for prometheus sources
+  file:
+    mode: 0755
+    path: "/tmp/prometheus/{{ prometheus_version }}"
+    state: directory
+
+- name: (sys) create prometheus system group
+  group:
+    name: "prometheus"
+    state: present
+    system: true
+
+- name: (sys) create prometheus system user
+  user:
+    createhome: false
+    group: "prometheus"
+    home: "/var/lib/prometheus"
+    name: "prometheus"
+    shell: "/usr/sbin/nologin"
+    system: true
+
+- name: (build) create folders for prometheus conf files
+  file:
+    group: "prometheus"
+    mode: 0755
+    owner: "prometheus"
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "/etc/prometheus"
+    - "/etc/prometheus/rules"
+    - "/etc/prometheus/file_sd"
+    - "/var/lib/prometheus"
+
+- name: (build) unpack prometheus sources
+  unarchive:
+    copy: false
+    dest: "/tmp/prometheus/{{ prometheus_version }}"
+    src: "{{ prometheus_source.dest }}"
+
+- name: (build) copy binaries to system
+  copy:
+    dest: "/usr/local/bin/{{ item }}"
+    group: "prometheus"
+    mode: 0755
+    owner: "prometheus"
+    remote_src: true
+    src: "/tmp/prometheus/{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+  with_items:
+    - consoles
+    - console_libraries
+    - prometheus
+    - promtool
+
+- name: (build) installing prometheus default configuration file
+  template:
+    dest: "/etc/prometheus/prometheus.yml"
+    group: "prometheus"
+    mode: 0644
+    owner: "prometheus"
+    src: "prometheus.yml.j2"
+  notify: reload prometheus
+
+- name: (build) installing systemd unit
+  template:
+    dest: "/etc/systemd/system/prometheus.service"
+    group: "prometheus"
+    mode: 0644
+    owner: "prometheus"
+    src: "prometheus.service.j2"
+  notify: restart prometheus

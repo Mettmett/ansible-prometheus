@@ -1,0 +1,41 @@
+= README
+
+== Brief
+
+Ansible role to install prometheus with a simple custom configuration.
+
+== How to use it ?
+
+=== Test it with molecule
+
+Simple ! Use the venv.sh script to enter to the matrix (c).
+
+[source,bash]
+----
+source venv.sh
+----
+
+This virtualenv will bring you needed tools. You will in the virtualenv automatically. You are now ready to create virtual machines and then use the playbook. 
+
+[source,bash]
+----
+molecule create && molecule converge
+----
+
+When you're all set, destroy it.
+
+[source,bash]
+----
+molecule destroy
+----
+
+=== Use this role in another ansible playbook
+
+Incorpore this role on your playbook and go ! Add this block on your `requirements.yml`
+
+[source,bash]
+----
+roles:
+  - src: git@github.com:Mettmett/ansible-prometheus.git
+    scm: git
+----

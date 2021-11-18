@@ -1,0 +1,17 @@
+---
+
+- name: reload prometheus
+  systemd:
+    daemon-reload: true
+    enabled: true
+    name: "prometheus.service"
+    masked: false
+    state: reloaded
+
+- name: restart prometheus
+  systemd:
+    daemon-reload: true
+    enabled: true
+    name: "prometheus.service"
+    masked: false
+    state: restarted

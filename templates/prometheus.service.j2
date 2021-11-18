@@ -1,0 +1,37 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+After=network-online.target
+Description=Prometheus Server
+Documentation=https://prometheus.io/docs/introduction/overview/
+
+[Service]
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/prometheus \
+  --storage.tsdb.path=/var/lib/prometheus \
+  --storage.tsdb.retention.time=180d \
+  --storage.tsdb.retention.size=0 \
+  --web.console.libraries=/etc/prometheus/console_libraries \
+  --web.console.templates=/etc/prometheus/consoles \
+  --web.listen-address=0.0.0.0:9090 \
+  --config.file=/etc/prometheus/prometheus.yml
+Group=prometheus
+Restart=on-failure
+SyslogIdentifier=prometheus
+Type=simple
+User=prometheus
+
+## hardening
+# more info at https://gist.github.com/ageis/f5595e59b1cddb1513d1b425a323db04 & https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictNamespaces=true
+RestrictRealtime=true
+
+[Install]
+WantedBy=multi-user.target
